@@ -1,0 +1,1 @@
+export const JWT_SECRET = "MyJsonWebSecret!For??Metaverse??Gather"
