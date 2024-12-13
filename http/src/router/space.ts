@@ -18,6 +18,14 @@ spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
 
     const { name, dimensions, mapId, thumbnail } = parsedBody.data
     const user = findUser(req.userId as string)
+
+    if (!user) {
+        res.status(400).json({
+            message: "No user exists"
+        })
+        return 
+    }
+
     if (!mapId && dimensions) {
         const space = await client.space.create({
             data: {
@@ -25,7 +33,8 @@ spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
                 width: parseInt(dimensions.split("x")[0]),
                 height: parseInt(dimensions.split("x")[1]),
                 thumbnail,
-                creatorId: (req.userId as string)
+                // @ts-ignore
+                creatorId: (user.id)
             }
         })
 
@@ -54,7 +63,8 @@ spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
             width: map.width,
             height: map.height,
             thumbnail: map.thumbnail,
-            creatorId: (req.userId as string)
+            // @ts-ignore
+            creatorId: (user.id)
         }
     })
     res.json({
@@ -88,9 +98,17 @@ spaceRouter.delete("/:spaceId", userMiddleware, async (req: Request, res: Respon
 })
 
 spaceRouter.get("/all", async (req: Request, res: Response) => {
+    const user = findUser(req.userId as string);
+    if (!user) {
+        res.status(400).json({
+            message: "User not exists"
+        })
+        return
+    }
     const spaces = await client.space.findMany({
         where: {
-            creatorId: req.userId
+            // @ts-ignore
+            creatorId: user.id
         },
         select: {
             id: true,
