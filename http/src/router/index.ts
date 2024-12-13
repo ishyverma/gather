@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import { JWT_SECRET } from "../config";
 import { userRouter } from "./user";
 import { spaceRouter } from "./space";
+import { adminRouter } from "./element";
 
 
 const client = new PrismaClient();
@@ -21,12 +22,11 @@ router.post("/signup", async (req: Request, res: Response) => {
     }
 
     const { username, password, type } = parsedBody.data
-    const hasedPassword = await bcrpyt.hash(password, 5)
 
     const user = await client.user.create({
         data: {
             username, 
-            password: hasedPassword, 
+            password, 
             type
         }
     })
@@ -59,8 +59,7 @@ router.post("/signin", async (req: Request, res: Response) => {
         return
     }
 
-    const hashedPassword = await bcrpyt.compare(password, isUser.password)
-    if (!hashedPassword) {
+    if (isUser.password !== password) {
         res.status(400).json({
             message: "Password incorrect"
         })
@@ -79,3 +78,4 @@ router.post("/signin", async (req: Request, res: Response) => {
 
 router.use("/user", userRouter);
 router.use("/space", spaceRouter);
+router.use("/admin", adminRouter)

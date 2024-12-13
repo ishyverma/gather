@@ -21,3 +21,33 @@ export const MakeSpace = z.object({
     dimensions: z.string().optional(),
     mapId: z.string().optional()
 })
+
+export const AddSpaceElement = z.object({
+    elementId: z.string(),
+    spaceId: z.string(),
+    x: z.number(),
+    y: z.number()
+})
+
+export const AddElement = z.object({
+    imageUrl: z.string(),
+    width: z.number(),
+    height: z.number(),
+    isStatic: z.boolean()
+})
+
+export const CreateAvatar = z.object({
+    imageUrl: z.string(),
+    name: z.string()
+})
+
+export const CreateMap = z.object({
+    thumbnail: z.string(),
+    dimensions: z.string(),
+    name: z.string(),
+    defaultElements: z.array(z.object({
+        elementId: z.string(),
+        x: z.number(),
+        y: z.number()
+    }))
+}) 

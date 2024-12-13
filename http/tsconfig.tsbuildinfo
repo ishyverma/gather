@@ -1,1 +1,1 @@
-{"root":["./src/config.ts","./src/index.ts","./src/middlewares/admin.ts","./src/middlewares/user.ts","./src/router/index.ts","./src/router/user.ts","./src/types/types.ts"],"version":"5.7.2"}
+{"root":["./src/config.ts","./src/index.ts","./src/middlewares/admin.ts","./src/middlewares/user.ts","./src/router/element.ts","./src/router/index.ts","./src/router/space.ts","./src/router/user.ts","./src/services/finduser.ts","./src/types/types.ts"],"version":"5.7.2"}
