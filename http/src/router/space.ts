@@ -9,7 +9,9 @@ const client = new PrismaClient();
 
 spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
     const parsedBody = MakeSpace.safeParse(req.body)
+
     if (!parsedBody.success) {
+        console.log("first space")
         res.status(400).json({
             message: "Validation failed"
         })
@@ -17,7 +19,7 @@ spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
     }
 
     const { name, dimensions, mapId, thumbnail } = parsedBody.data
-    const user = findUser(req.userId as string)
+    const user = await findUser(req.userId as string)
 
     if (!user) {
         res.status(400).json({
@@ -25,16 +27,24 @@ spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
         })
         return 
     }
+    
+    if (!mapId && !dimensions) {
+        console.log("second")
+        res.status(400).json({
+            message: "Validation failed"
+        })
+        return
+    }
 
-    if (!mapId && dimensions) {
+    if (!mapId) {
         const space = await client.space.create({
             data: {
                 name: name,
-                width: parseInt(dimensions.split("x")[0]),
-                height: parseInt(dimensions.split("x")[1]),
+                width: parseInt(dimensions?.split("x")[0] as string),
+                height: parseInt(dimensions?.split("x")[1] as string),
                 thumbnail,
                 // @ts-ignore
-                creatorId: (user.id)
+                creatorId: (user.id),
             }
         })
 
@@ -44,33 +54,59 @@ spaceRouter.post("/", userMiddleware, async (req: Request, res: Response) => {
         return
     } 
 
-    const map = await client.map.findUnique({
+    try {
+
+        const map = await client.map.findUnique({
+            where: {
+                id: mapId
+            }
+        })
+
+        const mapSpace = await client.space.create({
+            data: {
+                name: map?.name as string,
+                width: map?.width as number,
+                height: map?.height as number,
+                thumbnail: map?.thumbnail as string,
+                creatorId: (user.id) as string
+            }
+        })
+        res.json({
+            spaceId: mapSpace.id
+    })
+    } catch(err) {
+        res.status(400).json({
+            message: "No map exists"
+        })
+    }
+})  
+
+spaceRouter.delete("/element", userMiddleware, async (req: Request, res: Response) => {
+    const { elementId } = req.body
+
+    const element = await client.spaceElements.findFirst({
         where: {
-            id: mapId
+            id: elementId
         }
     })
 
-    if (!map) {
+    if (!element) {
         res.status(400).json({
-            message: "No map exists"
+            message: "No spaceElement found"
         })
         return
     }
 
-    const mapSpace = await client.space.create({
-        data: {
-            name: map.name,
-            width: map.width,
-            height: map.height,
-            thumbnail: map.thumbnail,
-            // @ts-ignore
-            creatorId: (user.id)
+    const deletedElement = await client.spaceElements.delete({
+        where: {
+            id: element.id
         }
     })
+
     res.json({
-        spaceId: mapSpace.id
-    })
-})  
+        message: "Element is deleted"
+    })  
+})
 
 spaceRouter.delete("/:spaceId", userMiddleware, async (req: Request, res: Response) => {
     const spaceId = req.params.spaceId
@@ -81,7 +117,7 @@ spaceRouter.delete("/:spaceId", userMiddleware, async (req: Request, res: Respon
     })
     if (!space) {
         res.status(400).json({
-            message: "No space exists"
+            message: "Space not exists"
         })
         return
     }
@@ -125,6 +161,19 @@ spaceRouter.get("/all", userMiddleware, async (req: Request, res: Response) => {
             name: s.name,
             dimensions: `${s.width}x${s.height}`,
             thumbnail: s.thumbnail
+        }))
+    })
+})
+
+spaceRouter.get("/elements", userMiddleware, async (req: Request, res: Response) => {
+    const element = await client.element.findMany({})
+    res.json({
+        elements: element.map(e => ({
+            id: e.id,
+            imageUrl: e.imageUrl,
+            width: e.width,
+            height: e.height,
+            static: e.static
         }))
     })
 })
@@ -224,27 +273,3 @@ spaceRouter.post("/element", userMiddleware, async (req: Request, res: Response)
 
 })
 
-spaceRouter.delete("/element", userMiddleware, async (req: Request, res: Response) => {
-    const { elementId } = req.body
-    const element = await client.spaceElements.delete({
-        where: {
-            id: elementId
-        }
-    })
-    res.json({
-        message: "Element deleted"
-    })  
-})
-
-spaceRouter.get("/elements", userMiddleware, async (req: Request, res: Response) => {
-    const element = await client.element.findMany({})
-    res.json({
-        elements: element.map(e => ({
-            id: e.id,
-            imageUrl: e.imageUrl,
-            width: e.width,
-            height: e.height,
-            static: e.static
-        }))
-    })
-})

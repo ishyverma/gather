@@ -22,18 +22,24 @@ router.post("/signup", async (req: Request, res: Response) => {
     }
 
     const { username, password, type } = parsedBody.data
+    try {
+        const user = await client.user.create({
+            data: {
+                username, 
+                password, 
+                type
+            }
+        })
 
-    const user = await client.user.create({
-        data: {
-            username, 
-            password, 
-            type
-        }
-    })
+        res.json({
+            userId: user.id
+        })
 
-    res.json({
-        userId: user.id
-    })
+    } catch (err) {
+        res.status(400).json({
+            message: "Username exists"
+        })
+    }
 })
 
 router.post("/signin", async (req: Request, res: Response) => {

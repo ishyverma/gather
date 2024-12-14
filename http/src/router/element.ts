@@ -80,6 +80,7 @@ adminRouter.post("/map", async (req: Request, res: Response) => {
     }
 
     const { thumbnail, dimensions, name, defaultElements } = parsedBody.data
+    console.log("defaultElements", defaultElements)
 
     const map = await client.map.create({
         data: {
@@ -96,6 +97,8 @@ adminRouter.post("/map", async (req: Request, res: Response) => {
             }
         }
     })
+
+
     res.json({
         id: map.id
     })
